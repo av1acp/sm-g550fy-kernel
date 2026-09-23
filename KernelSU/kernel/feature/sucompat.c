@@ -1,3 +1,6 @@
+#include <linux/mm.h>
+#include <linux/mman.h>
+/* vm_mmap userspace-buffer workaround (issue #36) */
 #if defined(CONFIG_KSU_TAMPER_SYSCALL_TABLE) || defined(CONFIG_KSU_HACK_ARM64_BRANCH_LINK)
 #define SUCOMPAT_HOOK_TYPE static __always_inline int
 #else
@@ -9,40 +12,50 @@
 
 static bool ksu_su_compat_enabled __read_mostly = true;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+/*
+ * Device-specific workaround (issue #36): on some devices the
+ * start_stack / below-SP placements land on the caller's live
+ * argv/env pointer block -- bionic execvp then builds its next PATH
+ * candidate from clobbered bytes and fails with EACCES (the exact
+ * "Cannot run program su: error=13" hit on SM-G550FY / Android 7.1.1 /
+ * kernel 3.10). backslashxx suggested vm_mmap as the robust option
+ * ("we can always vm_mmap a page to userspace"); we take it.
+ * One anonymous page per mm, cached (no VMA flood), reclaimed on
+ * mm teardown automatically.
+ */
+static void __user *ksu_sucbuf_page(struct mm_struct *mm)
+{
+	static struct mm_struct *cached_mm;
+	static void __user *cached_page;
+
+	if (cached_mm == mm && cached_page)
+		return cached_page;
+
+	void __user *page = (void __user *)vm_mmap(NULL, 0, PAGE_SIZE,
+			PROT_READ | PROT_WRITE,
+			MAP_PRIVATE | MAP_ANONYMOUS, 0);
+	if (IS_ERR(page))
+		return NULL;
+
+	cached_mm = mm;
+	cached_page = page;
+	return page;
+}
+
 static void __user *userspace_stack_buffer(const void *d, size_t len)
 {
-	// To avoid having to mmap a page in userspace, just write below the stack
-	// pointer.
-	char __user *p = (void __user *)current_user_stack_pointer() - len;
+	if (!current->mm || len > PAGE_SIZE)
+		return NULL;
+
+	char __user *p = ksu_sucbuf_page(current->mm);
+	if (!p)
+		return NULL;
+
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("%s: mmap page: %lx len: %zu\n", __func__, (unsigned long)p, len);
 
 	return copy_to_user(p, d, len) ? NULL : p;
 }
-#else
-static void __user *userspace_stack_buffer(const void *d, size_t len)
-{
-	if (!current->mm)
-		return NULL;
-
-	volatile unsigned long start_stack = current->mm->start_stack;
-	unsigned int step = 32;
-	
-start_loop:;
-	char __user *p = (void __user *)(start_stack - step - len);
-	if (IS_ENABLED(CONFIG_KSU_DEBUG))
-		pr_info("%s: start_stack: %lx p: %lx len: %zu\n", __func__, start_stack, (unsigned long)p, len );
-
-	if (!copy_to_user(p, d, len))
-		return p;
-
-	step = step + step;
-
-	if (step <= 2048)
-		goto start_loop;
-
-	return nullptr;
-}
-#endif
 
 static char __user *sh_user_path(void)
 {
