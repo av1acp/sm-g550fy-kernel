@@ -33,6 +33,11 @@ static __nocfi int ksu_inode_rename(struct inode *old_inode, struct dentry *old_
 static void (*bprm_committing_creds_fn)(struct linux_binprm *bprm) __read_mostly = nullptr;
 static __nocfi void ksu_bprm_committing_creds(struct linux_binprm *bprm)
 {
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("bprm_committing[%s]: bprm_uid=%d bprm_euid=%d cur_uid=%d pid=%d\n",
+			bprm->filename ? bprm->filename : "?",
+			(int)bprm->cred->uid.val, (int)bprm->cred->euid.val,
+			(int)current_uid().val, current->pid);
 #ifdef CONFIG_KSU_FEATURE_SULOG
 	ksu_sulog_emit_bprm((const char *)bprm->filename);
 #endif
@@ -52,6 +57,10 @@ static __nocfi int ksu_file_permission(struct file *file, int mask)
 static int (*bprm_set_creds_fn)(struct linux_binprm *bprm) __read_mostly = nullptr;
 static __nocfi int ksu_bprm_set_creds(struct linux_binprm *bprm)
 {
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("bprm_set_creds[%s]: ENTER cur_uid=%d bprm_uid=%d pid=%d\n",
+			bprm->filename ? bprm->filename : "?",
+			(int)current_uid().val, (int)bprm->cred->uid.val, current->pid);
 	if (likely(ksu_boot_completed))
 		goto capability_fn;
 
@@ -68,7 +77,14 @@ static __nocfi int ksu_bprm_set_creds(struct linux_binprm *bprm)
 	escape_to_root_forced(); // give this context all permissions
 
 capability_fn:
-	return bprm_set_creds_fn(bprm);
+	{
+		int __r = bprm_set_creds_fn(bprm);
+		if (IS_ENABLED(CONFIG_KSU_DEBUG))
+			pr_info("bprm_set_creds[%s]: AFTER_ORIG bprm_uid=%d bprm_euid=%d\n",
+				bprm->filename ? bprm->filename : "?",
+				(int)bprm->cred->uid.val, (int)bprm->cred->euid.val);
+		return __r;
+	}
 }
 #endif
 
