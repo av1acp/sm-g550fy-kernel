@@ -14,6 +14,11 @@ $(info -- MDIR: $(MDIR))
 # compliant to last upstream kernel change as of 623eba3
 CFLAGS_ksu.o += -DKSU_VERSION=32651
 
+# quoted includes like "manager/manager_identity.h" are resolved
+# relative to the INCLUDING file first (kernel/manager/* would look in
+# kernel/manager/manager/) -> put the kernelsu root on the search path
+CFLAGS_ksu.o += -I$(src)
+
 ifndef KSU_EXPECTED_SIZE
 KSU_EXPECTED_SIZE := 0x033b
 endif
