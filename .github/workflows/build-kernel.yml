@@ -27,16 +27,16 @@ jobs:
           sudo apt-get update -o Acquire::Retries=5
           sudo apt-get install -y --no-install-recommends bc flex bison
 
-      # 110 MB AOSP arm-eabi-4.8 — cached after the first run.
+      # ~155 MB arm-eabi-4.9 (KSU needs gcc >= 4.9) — cached after the first run.
       - name: Cache ARM toolchain
         uses: actions/cache@v6.1.0
         with:
-          path: toolchains/arm-eabi-4.8
-          key: arm-eabi-4.8-marshmallow-release-v1
+          path: toolchains/arm-eabi-4.9
+          key: arm-eabi-4.9-burstlam-v1
 
       - name: Build kernel
         env:
-          TOOLCHAIN_DIR: ${{ github.workspace }}/toolchains/arm-eabi-4.8
+          TOOLCHAIN_DIR: ${{ github.workspace }}/toolchains/arm-eabi-4.9
           KBUILD_BUILD_USER: github-actions
           KBUILD_BUILD_HOST: runner
         run: ./build.sh

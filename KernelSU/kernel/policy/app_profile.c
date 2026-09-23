@@ -143,7 +143,10 @@ static int escape_to_root(bool is_forced)
 	memcpy(&cred->cap_bset, &profile->capabilities.effective, sizeof(cred->cap_bset));
 	if (profile->uid != 0) {
 		memcpy(&cred->cap_inheritable, &profile->capabilities.effective, sizeof(cred->cap_inheritable));
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+		/* cap_ambient only exists since v3.14 */
 		memcpy(&cred->cap_ambient, &profile->capabilities.effective, sizeof(cred->cap_ambient));
+#endif
 	}
 
 	setup_groups(profile, cred);

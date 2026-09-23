@@ -108,7 +108,7 @@ asmlinkage long hook_armeabi_read(const struct pt_regs *regs)
 
 #else // END OF 4.19+ SYSCALL HANDLERS
  
-extern void *sys_call_table[];
+extern const unsigned long sys_call_table[];  /* matches arch/arm/include/asm/syscall.h */
 
 static void *armeabi_reboot __read_mostly = nullptr;
 asmlinkage long hook_armeabi_reboot(int magic1, int magic2, unsigned int cmd, void __user *arg)
@@ -228,7 +228,7 @@ static void syscall_table_sucompat_enable()
 	guarded_mutex_lock(&sucompat_toggle_mutex);
 
 	read_and_replace_syscall((void *)&armeabi_execve, __ARMEABI_execve, (void *)hook_armeabi_execve, (void *)sys_call_table);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 	read_and_replace_syscall((void *)&armeabi_execveat, __ARMEABI_execveat, (void *)hook_armeabi_execveat, (void *)sys_call_table);
 #endif
 	read_and_replace_syscall((void *)&armeabi_faccessat, __ARMEABI_faccessat, (void *)hook_armeabi_faccessat, (void *)sys_call_table);
@@ -240,7 +240,7 @@ static void syscall_table_sucompat_disable()
 	guarded_mutex_lock(&sucompat_toggle_mutex);
 
 	restore_syscall((void *)&armeabi_execve, __ARMEABI_execve, (void *)hook_armeabi_execve, (void *)sys_call_table);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 	restore_syscall((void *)&armeabi_execveat, __ARMEABI_execveat, (void *)hook_armeabi_execveat, (void *)sys_call_table);
 #endif
 	restore_syscall((void *)&armeabi_faccessat, __ARMEABI_faccessat, (void *)hook_armeabi_faccessat, (void *)sys_call_table);

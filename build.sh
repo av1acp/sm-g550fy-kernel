@@ -23,10 +23,12 @@ cd "$(dirname "$0")"
 ARCH=arm
 DEFCONFIG=o5lteswa_00_defconfig
 LOCALVER="-13870322"                       # reproduces stock utsrelease
-TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-$HOME/toolchains/arm-eabi-4.8}"
-AOSP_URL="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8"
-AOSP_BRANCH="marshmallow-release"
-FALLBACK_URL="https://github.com/burstlam/arm-eabi-4.9"
+# KSU BRANCH: KernelSU requires gcc >= 4.9 (their static_assert), so this
+# branch builds with arm-eabi-4.9 (burstlam mirror; ELF x86-64 verified).
+# Fallback: official AOSP arm-linux-androideabi-4.9 (prefix auto-detected).
+TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-$HOME/toolchains/arm-eabi-4.9}"
+PRIMARY_URL="https://github.com/burstlam/arm-eabi-4.9"
+FALLBACK_URL="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
 
 export ARCH
 export LOCALVERSION="$LOCALVER"
@@ -40,18 +42,26 @@ if [ ! -f "arch/arm/configs/$DEFCONFIG" ]; then
 fi
 
 # ------------------------------------------------------------- toolchain ----
-if [ ! -x "$TOOLCHAIN_DIR/bin/arm-eabi-gcc" ]; then
+if [ ! -x "$TOOLCHAIN_DIR/bin/arm-eabi-gcc" ] && [ ! -x "$TOOLCHAIN_DIR/bin/arm-linux-androideabi-gcc" ]; then
   log "fetching toolchain -> $TOOLCHAIN_DIR"
   mkdir -p "$(dirname "$TOOLCHAIN_DIR")"
   rm -rf "$TOOLCHAIN_DIR"
-  if ! git clone --depth 1 -b "$AOSP_BRANCH" "$AOSP_URL" "$TOOLCHAIN_DIR"; then
-    log "AOSP clone failed — fallback: $FALLBACK_URL"
+  if ! git clone --quiet --depth=1 "$PRIMARY_URL" "$TOOLCHAIN_DIR"; then
+    log "primary clone failed — fallback: $FALLBACK_URL"
     rm -rf "$TOOLCHAIN_DIR"
-    git clone --depth 1 "$FALLBACK_URL" "$TOOLCHAIN_DIR"
+    git clone --quiet --depth=1 "$FALLBACK_URL" "$TOOLCHAIN_DIR"
   fi
 fi
 
-CROSS="$TOOLCHAIN_DIR/bin/arm-eabi-"
+# auto-detect CROSS prefix from whichever gcc landed on disk
+if [ -x "$TOOLCHAIN_DIR/bin/arm-eabi-gcc" ]; then
+  CROSS="$TOOLCHAIN_DIR/bin/arm-eabi-"
+elif [ -x "$TOOLCHAIN_DIR/bin/arm-linux-androideabi-gcc" ]; then
+  CROSS="$TOOLCHAIN_DIR/bin/arm-linux-androideabi-"
+else
+  log "ERROR: no usable cross gcc in $TOOLCHAIN_DIR/bin"
+  exit 1
+fi
 if ! "${CROSS}gcc" --version >/dev/null 2>&1; then
   log "ERROR: ${CROSS}gcc is not executable on this host"
   exit 1
