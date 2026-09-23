@@ -44,6 +44,18 @@ static __nocfi void ksu_bprm_committing_creds(struct linux_binprm *bprm)
 	bprm_committing_creds_fn(bprm); // NOTE: void LSM hook
 }
 
+static void (*bprm_committed_creds_fn)(struct linux_binprm *bprm) __read_mostly = nullptr;
+static __nocfi void ksu_bprm_committed_creds(struct linux_binprm *bprm)
+{
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("bprm_committed[%s]: bprm_uid=%d bprm_euid=%d cur_uid=%d pid=%d\n",
+			bprm->filename ? bprm->filename : "?",
+			(int)bprm->cred->uid.val, (int)bprm->cred->euid.val,
+			(int)current_uid().val, current->pid);
+	if (bprm_committed_creds_fn)
+		bprm_committed_creds_fn(bprm);
+}
+
 static int (*file_permission_fn)(struct file *file, int mask) __read_mostly = nullptr;
 static __nocfi int ksu_file_permission(struct file *file, int mask)
 {
@@ -327,6 +339,7 @@ static __init void ksu_lsm_hook_init(void)
 #ifdef CONFIG_KSU_FEATURE_SULOG
 	LSM_HACK_INIT(bprm_committing_creds, ksu_bprm_committing_creds);
 #endif
+	LSM_HACK_INIT(bprm_committed_creds, ksu_bprm_committed_creds);
 
 #if !defined(CONFIG_KSU_TAMPER_SYSCALL_TABLE) && !defined(CONFIG_KSU_HACK_ARM64_BRANCH_LINK)
 	LSM_HACK_INIT(file_permission, ksu_file_permission);
