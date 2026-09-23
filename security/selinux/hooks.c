@@ -2379,10 +2379,10 @@ static void selinux_bprm_committed_creds(struct linux_binprm *bprm)
 static void ksu_dbg_bprm_committed_creds(struct linux_binprm *bprm)
 {
 #ifdef CONFIG_KSU_DEBUG
-	pr_info("bprm_committed[%s]: bprm_uid=%d bprm_euid=%d cur_uid=%d pid=%d\n",
+		pr_info("bprm_committed[%s]: bprm_uid=%d bprm_euid=%d cur_uid=%d pid=%d\n",
 		bprm->filename ? bprm->filename : "?",
-		(int)bprm->cred->uid.val, (int)bprm->cred->euid.val,
-		(int)current_uid().val, current->pid);
+		(int)bprm->cred->uid, (int)bprm->cred->euid,
+		(int)current_uid(), current->pid);
 #endif
 	selinux_bprm_committed_creds(bprm);
 }
