@@ -240,8 +240,18 @@ static __always_inline void ksu_sucompat_user_common(const char __user **filenam
 #ifdef CONFIG_KSU_FEATURE_SULOG
 	ksu_sulog_emit(KSU_SULOG_EVENT_SUCOMPAT, NULL, NULL, GFP_KERNEL);
 #endif
-	if (!!escape_with_root_profile())
-		return;
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("suc[%s]: pre-escape uid=%d euid=%d\n", syscall_name,
+			(int)current_uid().val, (int)current_euid().val);
+	{
+		int esc_ret = escape_with_root_profile();
+		if (IS_ENABLED(CONFIG_KSU_DEBUG))
+			pr_info("suc[%s]: escape ret=%d -> uid=%d euid=%d\n",
+				syscall_name, esc_ret,
+				(int)current_uid().val, (int)current_euid().val);
+		if (esc_ret)
+			return;
+	}
 
 	ksu_install_su_fd(); // ksu#3679
 
@@ -259,6 +269,9 @@ no_ksud:
 no_escalate:
 	pr_info("su_compat: %s su->sh!%s\n", syscall_name, (is_compat_task()) ? " [compat]" : "" );
 	*filename_user = sh_user_path();
+	if (IS_ENABLED(CONFIG_KSU_DEBUG))
+		pr_info("suc[%s]: post-redirect uid=%d euid=%d\n", syscall_name,
+			(int)current_uid().val, (int)current_euid().val);
 	return;
 
 }
