@@ -2371,22 +2371,6 @@ static void selinux_bprm_committed_creds(struct linux_binprm *bprm)
 	read_unlock(&tasklist_lock);
 }
 
-/* KSU debug observer (kernel-side ops wrapper): the KernelSU upstream
- * LSM_HACK walks security_hook_heads LISTS, but this tree dispatches
- * bprm_committed_creds through security_ops (ops-struct framework) —
- * list slot was empty so their hook silently never installed. Wrap the
- * ops entry directly to observe the final exec-cred commit boundary. */
-static void ksu_dbg_bprm_committed_creds(struct linux_binprm *bprm)
-{
-#ifdef CONFIG_KSU_DEBUG
-		pr_info("bprm_committed[%s]: bprm_uid=%d bprm_euid=%d cur_uid=%d pid=%d\n",
-		bprm->filename ? bprm->filename : "?",
-		(int)bprm->cred->uid, (int)bprm->cred->euid,
-		(int)current_uid(), current->pid);
-#endif
-	selinux_bprm_committed_creds(bprm);
-}
-
 /* superblock security operations */
 
 static int selinux_sb_alloc_security(struct super_block *sb)
@@ -5740,7 +5724,7 @@ static struct security_operations selinux_ops = {
 
 	.bprm_set_creds =		selinux_bprm_set_creds,
 	.bprm_committing_creds =	selinux_bprm_committing_creds,
-	.bprm_committed_creds =		ksu_dbg_bprm_committed_creds,
+	.bprm_committed_creds =		selinux_bprm_committed_creds,
 	.bprm_secureexec =		selinux_bprm_secureexec,
 
 	.sb_alloc_security =		selinux_sb_alloc_security,
