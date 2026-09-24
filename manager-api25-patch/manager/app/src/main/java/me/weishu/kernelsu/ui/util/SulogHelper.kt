@@ -179,7 +179,7 @@ fun parseSulogLine(
         timestampNs = fields["ts_ns"],
         currentTimeMillis = currentTimeMillis,
         uptimeMillis = uptimeMillis,
-        zoneId = zoneId,
+        timeZone = timeZone,
     )
     return SulogEntry(
         key = key,
