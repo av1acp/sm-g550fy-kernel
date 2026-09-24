@@ -1471,7 +1471,7 @@ int search_binary_handler(struct linux_binprm *bprm)
 
 EXPORT_SYMBOL(search_binary_handler);
 
-#if defined CONFIG_SEC_RESTRICT_FORK
+#if defined CONFIG_SEC_RESTRICT_ROOTING
 #if defined CONFIG_SEC_RESTRICT_ROOTING_LOG
 #define PRINT_LOG(...)	printk(KERN_ERR __VA_ARGS__)
 #else
@@ -1527,7 +1527,9 @@ out_nofile:
 	return ret;
 }
 EXPORT_SYMBOL(sec_check_execpath);
+#endif	/* End of CONFIG_SEC_RESTRICT_ROOTING */
 
+#if defined CONFIG_SEC_RESTRICT_FORK
 static int sec_restrict_fork(void)
 {
 	struct cred *shellcred;
