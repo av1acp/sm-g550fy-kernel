@@ -18,41 +18,30 @@ static bool ksu_su_compat_enabled __read_mostly = true;
  * argv/env pointer block -- bionic execvp then builds its next PATH
  * candidate from clobbered bytes and fails with EACCES (the exact
  * "Cannot run program su: error=13" hit on SM-G550FY / Android 7.1.1 /
- * kernel 3.10). backslashxx suggested vm_mmap as the robust option
- * ("we can always vm_mmap a page to userspace"); we take it.
- * One anonymous page per mm, cached (no VMA flood), reclaimed on
- * mm teardown automatically.
+ * kernel 3.10). backslashxx suggested vm_mmap as the robust option.
+ *
+ * One FRESH anonymous page per call. The page lives in the caller's
+ * address space and is reclaimed automatically when the process exits
+ * (or the VMA is unmapped). No global cache, so no cross-process
+ * state, no locking needed, no stale mm pointer, no page leak on
+ * alternating processes. Cost is one extra vm_mmap per su attempt,
+ * which is negligible compared to the exec itself.
  */
-static void __user *ksu_sucbuf_page(struct mm_struct *mm)
-{
-	static struct mm_struct *cached_mm;
-	static void __user *cached_page;
-
-	if (cached_mm == mm && cached_page)
-		return cached_page;
-
-	void __user *page = (void __user *)vm_mmap(NULL, 0, PAGE_SIZE,
-			PROT_READ | PROT_WRITE,
-			MAP_PRIVATE | MAP_ANONYMOUS, 0);
-	if (IS_ERR(page))
-		return NULL;
-
-	cached_mm = mm;
-	cached_page = page;
-	return page;
-}
-
 static void __user *userspace_stack_buffer(const void *d, size_t len)
 {
 	if (!current->mm || len > PAGE_SIZE)
 		return NULL;
 
-	char __user *p = ksu_sucbuf_page(current->mm);
-	if (!p)
+	unsigned long page = vm_mmap(NULL, 0, PAGE_SIZE,
+			PROT_READ | PROT_WRITE,
+			MAP_PRIVATE | MAP_ANONYMOUS, 0);
+	if (IS_ERR_VALUE(page))
 		return NULL;
 
+	char __user *p = (void __user *)page;
+
 	if (IS_ENABLED(CONFIG_KSU_DEBUG))
-		pr_info("%s: mmap page: %lx len: %zu\n", __func__, (unsigned long)p, len);
+		pr_info("%s: mmap page: %lx len: %zu\n", __func__, page, len);
 
 	return copy_to_user(p, d, len) ? NULL : p;
 }
