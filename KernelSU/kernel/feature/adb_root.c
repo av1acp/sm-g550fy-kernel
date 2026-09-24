@@ -1,4 +1,20 @@
 #ifdef CONFIG_KSU_FEATURE_ADBROOT
+/*
+ * ISSUE36_NOTE (SM-G550FY / Android 7.1.1, kernel 3.10):
+ *   setup_ld_preload() below writes LD_PRELOAD/LD_LIBRARY_PATH strings
+ *   into memory below current_user_stack_pointer(). On THIS device that
+ *   region overlaps the caller's live argv/env block, so every adbd child
+ *   fails with:
+ *     CANNOT LINK EXECUTABLE "/system/bin/sh": library
+ *     /data/adb/ksu/lib/libadbroot.so not found
+ *   Upstream tiann/KernelSU PR #3382 states the ADB-root feature requires
+ *   dynamic-linked adbd (Android 10+); this device ships the legacy static
+ *   adbd, so CONFIG_KSU_FEATURE_ADBROOT must stay OFF. If anyone re-enables
+ *   it, they must first port setup_ld_preload() to the same per-mm
+ *   vm_mmap-page approach used in feature/sucompat.c, and confirm the
+ *   manager's ADB-root toggle is not left enabled.
+ */
+
 
 static bool ksu_adb_root __read_mostly = false;
 
