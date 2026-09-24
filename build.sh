@@ -35,11 +35,12 @@ export LOCALVERSION="$LOCALVER"
 
 # KSU Manager signature gate: the kernel pre-authorizes exactly ONE
 # manager certificate (KSU's "failed to grant root" = cert mismatch).
-# Values below = signer cert of ksu_bundle/KernelSU_v3.3.0-48_32649-release.apk
+# Values below = signer cert of the Actions-built API25 manager APK
+# (KernelSU_bb0be92_29918-release.apk, minSdk25)
 # (apksigner: SHA-256 digest + DER length867 bytes). Upstream defaults
 # (0x033b/c371...) belong to a different signing key -> rejected ours.
-export KSU_EXPECTED_SIZE=867
-export KSU_EXPECTED_HASH="4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549"
+export KSU_EXPECTED_SIZE=744
+export KSU_EXPECTED_HASH="d0161c1b3cb0dae4cdbbc8371bba636435232f0f8837eac3a305625961aac0b2"
 
 log() { echo "[kernel-build] $*"; }
 
