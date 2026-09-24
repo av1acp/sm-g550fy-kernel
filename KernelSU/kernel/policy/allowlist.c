@@ -499,6 +499,20 @@ void ksu_load_allow_list()
 
 		migrate_profile(version, &profile);
 
+		/* Shell (uid 2000) is not allowed to grant itself root through a
+		 * stale allowlist entry. When CONFIG_KSU_SHELL_HAS_SU_ALWAYS is
+		 * off, the Manager's Superuser toggle owns shell access, so any
+		 * persisted "com.android.shell" profile is ignored here and the
+		 * toggle in the app remains the single source of truth.
+		 */
+#ifndef CONFIG_KSU_SHELL_HAS_SU_ALWAYS
+		if (!allow_shell && profile.curr_uid == SHELL_UID) {
+			pr_info("load_allow_uid: ignoring shell (uid %d) profile; Manager toggle owns shell root\n",
+				SHELL_UID);
+			continue;
+		}
+#endif
+
 		pr_info("load_allow_uid, name: %s, uid: %d, allow: %d\n", profile.key, profile.curr_uid, profile.allow_su);
 		ksu_set_app_profile(&profile);
 	}
