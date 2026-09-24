@@ -4086,10 +4086,12 @@ CONFIG_KSU_FEATURE_SULOG=y
 CONFIG_KSU_ENABLE_FULL_UID_CHECKS=y
 
 # ADBROOT injects LD_PRELOAD=/data/adb/ksu/lib/libadbroot.so into adbd's
-# children. That file is created by the manager's ksud install (verified
-# present: md5 85d1795c... matches the APK's bundled copy). Keep the
-# feature ON so the manager's ADB-root toggle is functional.
-CONFIG_KSU_FEATURE_ADBROOT=y
+# children. Upstream KernelSU PR #3382: 'only dynamic-linked adbd (i.e.
+# Android 10+) is supported'. This device is Android 7.1.1 (legacy static
+# adbd) -> the preload injection breaks every adb shell with
+#   CANNOT LINK EXECUTABLE "/system/bin/sh: library libadbroot.so not found"
+# Keep it permanently OFF. adb root still works through plain `su`.
+# CONFIG_KSU_FEATURE_ADBROOT is not set
 
 # Shell (uid 2000) must keep the default root profile: an explicit
 # allowlist entry for com.android.shell would otherwise give it a
