@@ -4079,14 +4079,21 @@ CONFIG_ARCH_HAS_ATOMIC64_DEC_IF_POSITIVE=y
 CONFIG_KSU=y
 CONFIG_KSU_TAMPER_SYSCALL_TABLE=y
 
-CONFIG_KSU_DEBUG=y
+# CONFIG_KSU_DEBUG is not set
 CONFIG_KSU_FEATURE_SULOG=y
 
 # Every non-root UID is validated against the allowlist -> apps must be prompted
 CONFIG_KSU_ENABLE_FULL_UID_CHECKS=y
 
 # ADBROOT injects LD_PRELOAD=/data/adb/ksu/lib/libadbroot.so into adbd's
-# children; without a working ksud install that file is missing ->
-# 'CANNOT LINK EXECUTABLE /system/bin/sh: libadbroot.so not found'.
-# Keep it off; adb root via plain `su` works (allowlist/prompt path).
-# CONFIG_KSU_FEATURE_ADBROOT is not set
+# children. That file is created by the manager's ksud install (verified
+# present: md5 85d1795c... matches the APK's bundled copy). Keep the
+# feature ON so the manager's ADB-root toggle is functional.
+CONFIG_KSU_FEATURE_ADBROOT=y
+
+# Shell (uid 2000) must keep the default root profile: an explicit
+# allowlist entry for com.android.shell would otherwise give it a
+# non-root profile and `su` from adb would come back non-root.
+CONFIG_KSU_SHELL_HAS_SU_ALWAYS=y
+
+# CONFIG_KSU_DEBUG is not set
