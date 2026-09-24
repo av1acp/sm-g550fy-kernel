@@ -37,7 +37,6 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun SendLogDialog(
@@ -92,7 +91,7 @@ fun SendLogDialog(
                     )
                 },
                 onClick = {
-                    val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", Locale.US)
+                    val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", java.util.Locale.US)
                     val current = formatter.format(Date())
                     exportBugreportLauncher.launch("KernelSU_bugreport_${current}.tar.gz")
                     onDismissRequest()

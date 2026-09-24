@@ -7,9 +7,7 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import java.util.ArrayDeque
-import java.util.Locale
 
 private const val SULOG_DIR = "/data/adb/ksu/log"
 private const val SULOG_LINE_LIMIT = 1000
@@ -18,7 +16,7 @@ private const val SULOG_FILE_SUFFIX = ".log"
 private val SULOG_FILE_NAME_REGEX = Regex("""$SULOG_FILE_PREFIX(\d{4}-\d{2}-\d{2})(?:-(\d+))?$SULOG_FILE_SUFFIX""")
 private const val NS_PER_MILLISECOND = 1_000_000L
 private fun sulogTimestampFormatter(): SimpleDateFormat =
-    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
 
 data class SulogFile(
     val name: String,

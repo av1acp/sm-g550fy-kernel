@@ -11,7 +11,6 @@ import java.io.FileWriter
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 fun getBugreportFile(context: Context): File {
 
@@ -105,7 +104,7 @@ fun getBugreportFile(context: Context): File {
     val modulesFile = File(bugreportDir, "modules.json")
     modulesFile.writeText(listModules())
 
-    val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", Locale.US)
+    val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", java.util.Locale.US)
     val current = formatter.format(Date())
 
     val targetFile = File(context.cacheDir, "KernelSU_bugreport_${current}.tar.gz")

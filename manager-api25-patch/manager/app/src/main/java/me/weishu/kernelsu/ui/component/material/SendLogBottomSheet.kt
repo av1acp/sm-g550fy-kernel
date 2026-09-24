@@ -47,7 +47,6 @@ import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.util.getBugreportFile
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 private tailrec fun Context.findComponentActivity(): ComponentActivity? {
     return when (this) {
@@ -115,7 +114,7 @@ fun SendLogBottomSheet(
                         modifier = Modifier.size(64.dp),
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                            val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", Locale.US)
+                            val formatter = SimpleDateFormat("yyyy-MM-dd_HH_mm", java.util.Locale.US)
                             val current = formatter.format(Date())
                             exportBugreportLauncher.launch("KernelSU_bugreport_${current}.tar.gz")
                         }) {
