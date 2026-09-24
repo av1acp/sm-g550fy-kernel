@@ -4096,6 +4096,6 @@ CONFIG_KSU_ENABLE_FULL_UID_CHECKS=y
 # Shell (uid 2000) must keep the default root profile: an explicit
 # allowlist entry for com.android.shell would otherwise give it a
 # non-root profile and `su` from adb would come back non-root.
-CONFIG_KSU_SHELL_HAS_SU_ALWAYS=y
+# CONFIG_KSU_SHELL_HAS_SU_ALWAYS is not set
 
 # CONFIG_KSU_DEBUG is not set
