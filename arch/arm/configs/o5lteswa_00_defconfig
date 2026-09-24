@@ -4081,3 +4081,12 @@ CONFIG_KSU_TAMPER_SYSCALL_TABLE=y
 
 CONFIG_KSU_DEBUG=y
 CONFIG_KSU_FEATURE_SULOG=y
+
+# Every non-root UID is validated against the allowlist -> apps must be prompted
+CONFIG_KSU_ENABLE_FULL_UID_CHECKS=y
+
+# ADBROOT injects LD_PRELOAD=/data/adb/ksu/lib/libadbroot.so into adbd's
+# children; without a working ksud install that file is missing ->
+# 'CANNOT LINK EXECUTABLE /system/bin/sh: libadbroot.so not found'.
+# Keep it off; adb root via plain `su` works (allowlist/prompt path).
+# CONFIG_KSU_FEATURE_ADBROOT is not set
